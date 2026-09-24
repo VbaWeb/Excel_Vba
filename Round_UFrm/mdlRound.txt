@@ -1,0 +1,58 @@
+Option Explicit
+
+' Windows API Declarations (32-bit & 64-bit compatible)
+' -------------------------------------------------------------
+#If VBA7 Then
+    Public Declare PtrSafe Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As LongPtr
+    Public Declare PtrSafe Function GetWindowLong Lib "user32" Alias "GetWindowLongA" (ByVal hWnd As LongPtr, ByVal nIndex As Long) As LongPtr
+    Public Declare PtrSafe Function SetWindowLong Lib "user32" Alias "SetWindowLongA" (ByVal hWnd As LongPtr, ByVal nIndex As Long, ByVal dwNewLong As LongPtr) As LongPtr
+    Public Declare PtrSafe Function DrawMenuBar Lib "user32" (ByVal hWnd As LongPtr) As Long
+    Public Declare PtrSafe Function CreateRoundRectRgn Lib "gdi32" (ByVal x1 As Long, ByVal y1 As Long, ByVal x2 As Long, ByVal y2 As Long, ByVal nW As Long, ByVal nH As Long) As LongPtr
+    Public Declare PtrSafe Function SetWindowRgn Lib "user32" (ByVal hWnd As LongPtr, ByVal hRgn As LongPtr, ByVal bRedraw As Boolean) As LongPtr
+    Public Declare PtrSafe Function GetDC Lib "user32" (ByVal hWnd As LongPtr) As LongPtr
+    Public Declare PtrSafe Function ReleaseDC Lib "user32" (ByVal hWnd As LongPtr, ByVal hDC As LongPtr) As Long
+    Public Declare PtrSafe Function GetDeviceCaps Lib "gdi32" (ByVal hDC As LongPtr, ByVal nIndex As Long) As Long
+#End If
+
+' Convert UserForm points to screen pixels (DPI aware)
+' -------------------------------------------------------------
+#If VBA7 Then
+Public Function PtsToPixels(pts As Single, bVert As Boolean) As Long
+    Dim hDC As LongPtr
+#Else
+Public Function PtsToPixels(pts As Single, bVert As Boolean) As Long
+    Dim hDC As Long
+#End If
+    hDC = GetDC(0)
+    If bVert Then
+        PtsToPixels = CLng((pts / 72) * GetDeviceCaps(hDC, 90))
+    Else
+        PtsToPixels = CLng((pts / 72) * GetDeviceCaps(hDC, 88))
+    End If
+    ReleaseDC 0, hDC
+End Function
+
+' Remove the title bar and apply rounded corners
+' -------------------------------------------------------------
+Public Sub ApplyRoundForm(frm As Object, Optional radius As Long = 25)
+#If VBA7 Then
+    Dim hWnd As LongPtr, hRgn As LongPtr
+#Else
+    Dim hWnd As Long, hRgn As Long
+#End If
+    If frm.Caption = "" Then
+        hWnd = FindWindow("ThunderDFrame", vbNullString)
+    Else
+        hWnd = FindWindow("ThunderDFrame", frm.Caption)
+    End If
+    If hWnd = 0 Then Exit Sub
+    
+    ' 1. Remove the title bar style (WS_CAPTION) and modal border (WS_EX_DLGMODALFRAME)
+    SetWindowLong hWnd, -16, GetWindowLong(hWnd, -16) And Not &HC00000
+    SetWindowLong hWnd, -20, GetWindowLong(hWnd, -20) And Not &H1
+    
+    ' 2. Create a rounded rectangle region and apply it to the form
+    hRgn = CreateRoundRectRgn(0, 0, PtsToPixels(frm.Width, False), PtsToPixels(frm.Height, True), radius, radius)
+    SetWindowRgn hWnd, hRgn, True
+    DrawMenuBar hWnd
+End Sub

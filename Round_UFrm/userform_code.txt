@@ -1,0 +1,17 @@
+Option Explicit
+
+
+'Apply rounded corners when the form activate :
+'----------------------------------------------
+Private Sub UserForm_Activate()
+    Call mdlRound.ApplyRoundForm(Me, 50)
+End Sub
+
+
+
+' Close the UserForm:
+' -------------------
+Private Sub btn_close_Click()
+    Unload Me
+End Sub
+
