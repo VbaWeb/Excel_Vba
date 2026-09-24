@@ -1,0 +1,28 @@
+Option Explicit
+
+' Windows API functions (32-bit & 64-bit compatible):
+' ---------------------------------------------------
+Private Declare PtrSafe Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As LongPtr
+Private Declare PtrSafe Function GetWindowLong Lib "user32" Alias "GetWindowLongA" (ByVal hWnd As LongPtr, ByVal nIndex As Long) As LongPtr
+Private Declare PtrSafe Function SetWindowLong Lib "user32" Alias "SetWindowLongA" (ByVal hWnd As LongPtr, ByVal nIndex As Long, ByVal dwNewLong As LongPtr) As LongPtr
+Private Declare PtrSafe Function DrawMenuBar Lib "user32" (ByVal hWnd As LongPtr) As Long
+
+Private Const GWL_STYLE As Long = -16
+Private Const WS_MINIMIZEBOX As Long = &H20000
+Private Const WS_MAXIMIZEBOX As Long = &H10000
+Private Const WS_SYSMENU As Long = &H80000
+
+' Keep the title bar and enable Minimize / Maximize / Close :
+' -------------------------------------------------------------
+Private Sub UserForm_Activate()
+    Dim hWnd As LongPtr, st As LongPtr
+    If Me.Caption = "" Then
+        hWnd = FindWindow("ThunderDFrame", vbNullString)
+    Else
+        hWnd = FindWindow("ThunderDFrame", Me.Caption)
+    End If
+    If hWnd = 0 Then Exit Sub
+    st = GetWindowLong(hWnd, GWL_STYLE)
+    SetWindowLong hWnd, GWL_STYLE, st Or WS_MINIMIZEBOX Or WS_MAXIMIZEBOX Or WS_SYSMENU
+    DrawMenuBar hWnd
+End Sub
