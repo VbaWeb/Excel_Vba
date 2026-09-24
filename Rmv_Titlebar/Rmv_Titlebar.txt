@@ -1,0 +1,36 @@
+Option Explicit
+
+' Windows API functions (32-bit & 64-bit compatible):
+' ---------------------------------------------------
+Private Declare PtrSafe Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As LongPtr
+Private Declare PtrSafe Function GetWindowLong Lib "user32" Alias "GetWindowLongA" (ByVal hWnd As LongPtr, ByVal nIndex As Long) As LongPtr
+Private Declare PtrSafe Function SetWindowLong Lib "user32" Alias "SetWindowLongA" (ByVal hWnd As LongPtr, ByVal nIndex As Long, ByVal dwNewLong As LongPtr) As LongPtr
+Private Declare PtrSafe Function SetWindowPos Lib "user32" (ByVal hWnd As LongPtr, ByVal hWndInsertAfter As LongPtr, ByVal X As Long, ByVal Y As Long, ByVal cx As Long, ByVal cy As Long, ByVal uFlags As Long) As Long
+
+
+' Remove the default title bar and border on activation :
+' -------------------------------------------------------
+Private Sub UserForm_Activate()
+    Dim hWnd As LongPtr
+    If Me.Caption = "" Then
+        hWnd = FindWindow("ThunderDFrame", vbNullString)
+    Else
+        hWnd = FindWindow("ThunderDFrame", Me.Caption)
+    End If
+    If hWnd = 0 Then Exit Sub
+    
+    ' 1. Remove title bar style (WS_CAPTION)
+    SetWindowLong hWnd, -16, GetWindowLong(hWnd, -16) And Not &HC00000
+    
+    ' 2. Remove outer modal frame (WS_EX_DLGMODALFRAME)
+    SetWindowLong hWnd, -20, GetWindowLong(hWnd, -20) And Not &H1
+    
+    ' 3. Force the window to redraw without borders
+    SetWindowPos hWnd, 0, 0, 0, 0, 0, &H27
+End Sub
+
+' Close the UserForm:
+' -------------------
+Private Sub btn_close_Click()
+    Unload Me
+End Sub
